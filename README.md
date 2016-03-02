@@ -1,6 +1,19 @@
 # openvpn-installer
 Installation script for running openvpn server and generating certificate for clients
 
+## Firewall configurations
+> Faced some issue in pinging client <-> client and server -> (some) clients. Here are some iptable configurations that helped
+
+```shell
+iptables -t filter -F
+iptables -t nat -F
+iptables -A FORWARD -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A FORWARD -s "10.8.0.0/24" -j ACCEPT
+iptables -A FORWARD -j REJECT
+iptables -t nat -A POSTROUTING -s "10.8.0.0/24" -j MASQUERADE
+```
+
+
 > Note:
 Adapted from github.com/Nyr
 The MIT License (MIT)
