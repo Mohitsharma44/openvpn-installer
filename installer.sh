@@ -1,5 +1,7 @@
 #!/bin/bash
-# OpenVPN road warrior installer for Debian, Ubuntu and CentOS
+# __author__ = Mohit Sharma, NYU CUSP 2016
+# OpenVPN for SONYC installer for Debian, Ubuntu and CentOS
+# is a modified version of openwarriors vpn script
 
 # This script will work on Debian, Ubuntu, CentOS and probably other distros
 # of the same families, although no support is offered for them. It isn't
@@ -54,11 +56,11 @@ newclient () {
 
 
 # Try to get our IP from the system and fallback to the Internet.
-# I do this to make the script compatible with NATed servers (lowendspirit.com)
+# I do this to make the script compatible with NATed servers
 # and to avoid getting an IPv6.
 IP=$(ip addr | grep 'inet' | grep -v inet6 | grep -vE '127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | grep -o -E '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}' | head -1)
 if [[ "$IP" = "" ]]; then
-    IP=$(wget -qO- ipv4.icanhazip.com)
+    IP=$(wget -qO- api.ipify.org?format=plain; echo)
 fi
 
 
@@ -66,44 +68,44 @@ if [[ -e /etc/openvpn/server.conf ]]; then
     while :
     do
 	clear
-	echo "Looks like OpenVPN is already installed"
+	echo "Looks like OpenVPN for SONYC is already installed"
 	echo ""
 	echo "What do you want to do?"
-	echo "   1) Add a cert for a new user"
-	echo "   2) Revoke existing user cert"
+	echo "   1) Add a cert for a new node"
+	echo "   2) Revoke existing node cert"
 	echo "   3) Remove OpenVPN"
 	echo "   4) Exit"
 	read -p "Select an option [1-4]: " option
 	case $option in
 	    1)
 		echo ""
-		echo "Name for the client cert"
+		echo "Name for the Node cert"
 		echo "Use one word only, no special characters"
-		read -p "Client name: " -e -i client CLIENT
+		read -p "Node name: " -e -i client CLIENT
 		cd /etc/openvpn/easy-rsa/
 		./easyrsa build-client-full $CLIENT nopass
 		# Generates the custom client.ovpn
 		newclient "$CLIENT"
 		echo ""
-		echo "Client $CLIENT added, certs available at ~/$CLIENT.ovpn"
+		echo "Node $CLIENT added, certs available at ~/$CLIENT.ovpn"
 		exit
 		;;
 	    2)
 		# This option could be documented a bit better and maybe even be simplimplified
-		# ...but what can I say, I want some sleep too
+		# ...but what can I say...
 		NUMBEROFCLIENTS=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep -c "^V")
 		if [[ "$NUMBEROFCLIENTS" = '0' ]]; then
 		    echo ""
-		    echo "You have no existing clients!"
+		    echo "You have no existing Nodes!"
 		    exit 5
 		fi
 		echo ""
-		echo "Select the existing client certificate you want to revoke"
+		echo "Select the existing Node certificate you want to revoke"
 		tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | nl -s ') '
 		if [[ "$NUMBEROFCLIENTS" = '1' ]]; then
-		    read -p "Select one client [1]: " CLIENTNUMBER
+		    read -p "Select one Node [1]: " CLIENTNUMBER
 		else
-		    read -p "Select one client [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
+		    read -p "Select one Node [1-$NUMBEROFCLIENTS]: " CLIENTNUMBER
 		fi
 		CLIENT=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep "^V" | cut -d '=' -f 2 | sed -n "$CLIENTNUMBER"p)
 		cd /etc/openvpn/easy-rsa/
@@ -125,7 +127,7 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 		    fi
 		fi
 		echo ""
-		echo "Certificate for client $CLIENT revoked"
+		echo "Certificate for Node $CLIENT revoked"
 		exit
 		;;
 	    3)
@@ -174,7 +176,7 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 else
     clear
     echo 'Welcome to the Sonyc OpenVPN installer'
-    echo "This will also update the iptables."
+    echo "This will also update the iptable rules."
     echo ""
     # OpenVPN setup and first user creation
     echo "I need to ask you a few questions before starting the setup"
@@ -195,11 +197,11 @@ else
     echo "   5) Hurricane Electric"
     read -p "DNS [1-6]: " -e -i 1 DNS
     echo ""
-    echo "Finally, tell me your name for the client cert"
+    echo "Finally, tell me your name for the Node cert"
     echo "Please, use one word only, no special characters"
-    read -p "Client name: " -e -i client CLIENT
+    read -p "Node name: " -e -i client CLIENT
     echo ""
-    echo "Okay, that was all I needed. We are ready to setup your OpenVPN server now"
+    echo "Okay, that was all I needed. We are ready to setup  OpenVPN for SONYC server now"
     read -n1 -r -p "Press any key to continue..."
     if [[ "$OS" = 'debian' ]]; then
 	apt-get update
@@ -346,7 +348,7 @@ crl-verify crl.pem" >> /etc/openvpn/server.conf
 	echo ""
 	echo "Looks like your server is behind a NAT!"
 	echo ""
-	echo "If your server is NATed (LowEndSpirit), I need to know the external IP"
+	echo "If SONYC server is NATed, I need to know the external IP"
 	echo "If that's not the case, just ignore this and leave the next field blank"
 	read -p "External IP: " -e USEREXTERNALIP
 	if [[ "$USEREXTERNALIP" != "" ]]; then
@@ -359,19 +361,25 @@ dev tun
 proto udp
 sndbuf 0
 rcvbuf 0
-remote $IP $PORT
-resolv-retry infinite
+remote $IP $PORT" > /etc/openvpn/client-common.txt
+# Add dns server -- same as dns server of the vpn server
+for dns in $(grep -v '#' ./server.conf | grep 'dhcp-option' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+do
+    echo "dhcp-option "$dns
+done
+    echo "resolv-retry infinite
 nobind
 persist-key
 persist-tun
 remote-cert-tls server
 comp-lzo
 verb 3" > /etc/openvpn/client-common.txt
+
     # Generates the custom client.ovpn
     newclient "$CLIENT"
     echo ""
     echo "Finished!"
     echo ""
-    echo "Your client config is available at ~/$CLIENT.ovpn"
-    echo "If you want to add more clients, you simply need to run this script another time!"
+    echo "The Node config is available at ~/$CLIENT.ovpn"
+    echo "If you want to add more Nodes, you simply need to run this script another time!"
     fi
