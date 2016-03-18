@@ -2,7 +2,7 @@
 Installation script for running openvpn server and generating certificate for clients
 
 ## Firewall configurations
-> Faced some issue in pinging client <-> client and server -> (some) clients. Here are some iptable configurations that helped
+* Add this on client side
 
 ```shell
 iptables -t filter -F
@@ -12,7 +12,7 @@ iptables -A FORWARD -s "10.8.0.0/24" -j ACCEPT
 iptables -A FORWARD -j REJECT
 iptables -t nat -A POSTROUTING -s "10.8.0.0/24" -j MASQUERADE
 ```
-
+* For additional IPTable rules, refer sonycnode's vpnswitch.py 
 
 > Note:
 Adapted from github.com/Nyr
