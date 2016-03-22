@@ -41,17 +41,17 @@ else
 fi
 
 newclient () {
-    # Generates the custom client.ovpn
-    cp /etc/openvpn/client-common.txt ~/$1.ovpn
-    echo "<ca>" >> ~/$1.ovpn
-    cat /etc/openvpn/easy-rsa/pki/ca.crt >> ~/$1.ovpn
-    echo "</ca>" >> ~/$1.ovpn
-    echo "<cert>" >> ~/$1.ovpn
-    cat /etc/openvpn/easy-rsa/pki/issued/$1.crt >> ~/$1.ovpn
-    echo "</cert>" >> ~/$1.ovpn
-    echo "<key>" >> ~/$1.ovpn
-    cat /etc/openvpn/easy-rsa/pki/private/$1.key >> ~/$1.ovpn
-    echo "</key>" >> ~/$1.ovpn
+    # Generates the custom client.conf
+    cp /etc/openvpn/client-common.txt ~/$1.conf
+    echo "<ca>" >> ~/$1.conf
+    cat /etc/openvpn/easy-rsa/pki/ca.crt >> ~/$1.conf
+    echo "</ca>" >> ~/$1.conf
+    echo "<cert>" >> ~/$1.conf
+    cat /etc/openvpn/easy-rsa/pki/issued/$1.crt >> ~/$1.conf
+    echo "</cert>" >> ~/$1.conf
+    echo "<key>" >> ~/$1.conf
+    cat /etc/openvpn/easy-rsa/pki/private/$1.key >> ~/$1.conf
+    echo "</key>" >> ~/$1.conf
 }
 
 
@@ -84,10 +84,10 @@ if [[ -e /etc/openvpn/server.conf ]]; then
 		read -p "Node name: " -e -i client CLIENT
 		cd /etc/openvpn/easy-rsa/
 		./easyrsa build-client-full $CLIENT nopass
-		# Generates the custom client.ovpn
+		# Generates the custom client.conf
 		newclient "$CLIENT"
 		echo ""
-		echo "Node $CLIENT added, certs available at ~/$CLIENT.ovpn"
+		echo "Node $CLIENT added, certs available at ~/$CLIENT.conf"
 		exit
 		;;
 	    2)
@@ -375,11 +375,11 @@ remote-cert-tls server
 comp-lzo
 verb 3" > /etc/openvpn/client-common.txt
 
-    # Generates the custom client.ovpn
+    # Generates the custom client.conf
     newclient "$CLIENT"
     echo ""
     echo "Finished!"
     echo ""
-    echo "The Node config is available at ~/$CLIENT.ovpn"
+    echo "The Node config is available at ~/$CLIENT.conf"
     echo "If you want to add more Nodes, you simply need to run this script another time!"
     fi
