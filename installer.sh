@@ -362,18 +362,18 @@ proto udp
 sndbuf 0
 rcvbuf 0
 remote $IP $PORT" > /etc/openvpn/client-common.txt
-# Add dns server -- same as dns server of the vpn server
-for dns in $(grep -v '#' ./server.conf | grep 'dhcp-option' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
-do
-    echo "dhcp-option "$dns
-done
+    # Add dns server -- same as dns server of the vpn server
+    for dns in $(grep -v '#' /etc/openvpn/server.conf | grep 'dhcp-option' | grep -E -o '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}')
+    do
+        echo "dhcp-option DNS $dns" >> /etc/openvpn/client-common.txt
+    done
     echo "resolv-retry infinite
 nobind
 persist-key
 persist-tun
 remote-cert-tls server
 comp-lzo
-verb 3" > /etc/openvpn/client-common.txt
+verb 3" >> /etc/openvpn/client-common.txt
 
     # Generates the custom client.conf
     newclient "$CLIENT"
