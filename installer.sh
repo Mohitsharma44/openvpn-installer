@@ -276,6 +276,9 @@ persist-key
 persist-tun
 status openvpn-status.log
 verb 3
+script-security 2
+up /etc/openvpn/update-resolv-conf
+down /etc/openvpn/update-resolv-conf
 crl-verify crl.pem" >> /etc/openvpn/server.conf
     # Enable net.ipv4.ip_forward for the system
     if [[ "$OS" = 'debian' ]]; then
